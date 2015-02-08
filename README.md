@@ -3,7 +3,8 @@ SoundSieve backend for the iOS application
 
 Version 1.01, 2/8/2015:
   - implemented modified version of Reddit's hotness algorithm to sort tracks based on hotness
-  - default sort option is still set to random, but tracks sorted by hotness can be access by <genre>/hot
+  - default sort option is still set to random, but tracks sorted by hotness can be access by &lt;genre&gt;/hot
+
 Version 1, 2/8/2015:
   - retrieves track and comment metadata from Soundcloud
   - returns json for genre search queries
