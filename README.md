@@ -10,3 +10,4 @@ Version 1, 2/8/2015:
     - implement hotness algorithm to sort comments (give user choice of random or hot)
     - allows for multiple genres
     - bigger queries? (soundcloud might not allow...)
+    - weighted comments (e.g. if comment contains "boring" weight is -1, comment contains "awesome" weight is +2, else comment is worth 1)
