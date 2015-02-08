@@ -2,13 +2,14 @@ import webapp2
 import os
 import jinja2
 import json
+import datetime
 import time
 import urllib
 import urllib2
 import soundcloud
 import sys
-import soundcloud
 import random
+import math
 from google.appengine.ext import db
 from google.appengine.api import memcache
 
@@ -49,6 +50,10 @@ class ReqJSON(db.Model):
 class RandomHandler(Handler):
 	def get(self, genre1):
 		genre = urllib.quote(genre1) 		#to make sure it's url valid
+		if '/' in genre: 
+			genre, sortOption = genre.split('/')
+		else:
+			sortOption = 'random'
 		arr = []
 		comments = []
 		####
@@ -108,7 +113,7 @@ class RandomHandler(Handler):
 						# for b in range(len(comments)):
 						# 	arr.append(comments[b].get('timestamp'))
 						#okay this works
-
+						#calculating startTime based on comment density now
 						arr = [0] * (int(tracks[a].get('duration')/1000)+10)
 						for b in range(len(comments)):
 							if comments[b].get('timestamp') and comments[b].get('timestamp') < len(arr)*1000:
@@ -119,6 +124,16 @@ class RandomHandler(Handler):
 								greatestSum = tempsum
 								startTime = index
 
+						# how about reddit's hot algorithm? include a hotness attr
+						# hotness value = log(num_likes + 20*num_comments) + time_elapsed/45000
+						if tracks[a].get('release_day'):
+							time_track = datetime.datetime(tracks[a].get('release_year'), tracks[a].get('release_month'), tracks[a].get('release_day'))
+						else:
+							time_track = datetime.datetime(2011,5,1)
+						time_obj = time_track - datetime.datetime(2007, 8, 1)
+						time_dif = time_obj.days*3600*24 + time_obj.seconds
+						hotness = math.log(20*len(comments) * tracks[a].get('likes_count'), 10) + time_dif/45000
+						intrack['hotness'] = hotness
 						# var title: String
 						#    var id: Int
 						#    var duration: Int
@@ -148,7 +163,12 @@ class RandomHandler(Handler):
 		#write random function
 		#tracks = json.load(urllib2.urlopen(url)).get('tracks') #url is hardcoded for now...
 		# self.write(tracks[random.randint(0,99)].get('id'))
-		if tracks_filtered: random.shuffle(tracks_filtered)
+		#sort randomly (shuffle)
+		if tracks_filtered and sortOption == 'random': 
+			random.shuffle(tracks_filtered)
+		#or sort based on reddit's hot algorithm?
+		else:
+			tracks_filtered.sort(key=lambda x: x.get('hotness'), reverse=True)
 		self.write(json.dumps(tracks_filtered))
 		#self.write("This should spit out a random song")
 
