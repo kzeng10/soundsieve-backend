@@ -18,3 +18,4 @@ To do:
   - update the database every x hours so users get new content...
   - bigger queries? (soundcloud might not allow...)
   - weighted comments (e.g. if comment contains "boring" weight is -1, comment contains "awesome" weight is +2, else comment is worth 1)
+  - store upvotes/downvotes of song (swipe right or left)
