@@ -15,5 +15,6 @@ Version 1, 2/8/2015:
 
 To do:
   - allows for multiple genres
+  - update the database every x hours so users get new content...
   - bigger queries? (soundcloud might not allow...)
   - weighted comments (e.g. if comment contains "boring" weight is -1, comment contains "awesome" weight is +2, else comment is worth 1)
