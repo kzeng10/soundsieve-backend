@@ -3,7 +3,7 @@ SoundSieve backend for the iOS application
 
 Version 1.03, 2/15/2015:
   - added multi-genre functionality. url format is now using parameters only, i.e. /api?sort=<sort method>&genre=<genre>&genre=<genre>...etc
-  - increased http response deadline so we get deadlineExceeded errors less frequently (ideally, while it's loading the app should have a loading screen or something)
+  - increased http response deadline so we get deadlineExceeded errors less frequently (ideally, while it's loading the app should have a loading screen or something) (maybe we can solve this with async?)
 
 Version 1.02, 2/14/2015:
   - now updates the database and memcache if over an hour old!
