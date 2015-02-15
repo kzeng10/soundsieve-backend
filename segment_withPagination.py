@@ -44,14 +44,18 @@ class ReqJSON(db.Model):
 	genre = db.StringProperty(required = True)
 	json_str = db.TextProperty(required = True)
 	created = db.DateTimeProperty(auto_now_add = True)
+	page = db.IntegerProperty(required = True)
 
 class RandomHandler(Handler):
 	def get(self, genre1):
 		genre = urllib.quote(genre1) 		#to make sure it's url valid
 		if '/' in genre: 
-			genre, sortOption = genre.split('/')
+			genre, sortOption, page = genre.split('/')
+			page = int(page)
 		else:
 			sortOption = 'random'				#hot by default
+			page = 1 							#page 1 by default
+		if page == '': page = 1
 		arr = []
 		comments = []
 		####
@@ -59,12 +63,13 @@ class RandomHandler(Handler):
 		#downloadable, minimum duration (2 min), minimum playbacks (1000), minimum likes (5), minimum comments (5)
 		#hotness = plays / (time elapsed)^1.2
 		#store song snippets on box
-		url = 'https://api-v2.soundcloud.com/explore/' + genre + '?limit=200'		#offset parameter for paging (e.g. offset = n*limit to get results for nth page)
+		url = 'https://api-v2.soundcloud.com/explore/' + genre + '?offset=' + str((page-1)*50)	+ "&tag=out-of-experiment&limit=50"	#offset parameter for paging (e.g. offset = (n-1)*limit to get results for nth page)
+		print url
 		self.response.headers['Content-Type'] = 'application/json; charset=UTF-8'
 		# mc_genre = memcache.get('genre')
-		tracks = memcache.get('tracks_' + genre)
-		tracks_filtered = memcache.get('tracks_filtered_' + genre) 			#type string or None
-		lastUpdated = memcache.get('lastUpdated_' + genre)					#type string or None
+		tracks = memcache.get('tracks_' + genre + "_" + str(page))
+		tracks_filtered = memcache.get('tracks_filtered_' + genre + "_" + str(page)) 			#type string or None
+		lastUpdated = memcache.get('lastUpdated_' + genre + "_" + str(page))					#type string or None
 		if tracks:
 			tracks = json.loads(tracks)
 
@@ -73,10 +78,10 @@ class RandomHandler(Handler):
 			#url = url + genre + "?limit=50"
 			req = json.load(urllib2.urlopen(url))
 			tracks = req.get('tracks')
-			# print req.get('next_href')
-			memcache.set('tracks_'+genre, json.dumps(tracks))
+			print req.get('next_href')
+			memcache.set('tracks_'+genre+"_"+str(page), json.dumps(tracks))
 			# memcache.set('genre', genre)
-			memcache.set('lastUpdated_'+genre, int(time.time()))
+			memcache.set('lastUpdated_'+genre+"_"+str(page), int(time.time()))
 			filter_change_needed = True
 
 		if tracks_filtered and not filter_change_needed: 					#if the filtered tracks list exists in memcache and change isn't needed
@@ -85,16 +90,17 @@ class RandomHandler(Handler):
 		elif filter_change_needed: 											#if memcache needs to update (or not found in memcache)
 			query = db.GqlQuery('SELECT * FROM ReqJSON')					#query db to check if we already did this before
 			query = list(query)
-			# print "DB QUERY"
+			print "DB QUERY"
 			in_db = False
 			tooOld = False 													#check if db needs to update as well
 			for q in query:
 				if q.genre == genre:										#if found in db. USE THIS TO IMPLEMENT MULTIPLE GENRE FEATURE
 					in_db = True
 					if time.time() - time.mktime(q.created.timetuple()) > 3600:	#if the db entry is more than an hour old, delete and refresh
-						q.delete()												#delete old entry
+						db.get(q.get('__key__')).delete()						#delete old entr
 						tooOld = True
-					tracks_filtered = json.loads(q.json_str)
+					else:
+						tracks_filtered = json.loads(q.json_str)
 			if not in_db or tooOld:												#if not in db or db needs to be updated(along with memcache), we send http requests, and then store to db
 				tracks_filtered = []											#going to generate list of track objects
 				for a in range(len(tracks)):
@@ -160,9 +166,9 @@ class RandomHandler(Handler):
 							else:
 								intrack[attr] = tracks[a].get(attr)
 						tracks_filtered.append(intrack)
-				track = ReqJSON(genre = genre, json_str=json.dumps(tracks_filtered)) 		#add to db
+				track = ReqJSON(genre = genre, json_str=json.dumps(tracks_filtered), page=page) 		#add to db
 				track.put()
-			memcache.set('tracks_filtered_'+genre, json.dumps(tracks_filtered))
+			memcache.set('tracks_filtered_'+genre+"_"+str(page), json.dumps(tracks_filtered))
 		#now, to return json
 		#just return tracks_filtered list of objects, each one with an additional start time for most popular segment
 
