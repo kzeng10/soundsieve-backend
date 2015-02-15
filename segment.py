@@ -19,9 +19,6 @@ jinja_env = jinja2.Environment(loader = jinja2.FileSystemLoader(template_dir),
 								autoescape = True)
 
 #handler for the jinja2 env. allows us to use templates! c/p this code all you want for other projects
-#https://api-v2.soundcloud.com/explore/techno?limit=100&linked_partitioning=1
-# stream url: https://api.soundcloud.com/tracks/189594894/stream?client_id=6ec16ffb5ed930fce00949be480f746b&allows_redirect=false#t=50
-# comment url: https://api.soundcloud.com/tracks/189594894/comments?client_id=6ec16ffb5ed930fce00949be480f746b
 client = soundcloud.Client(client_id=client_id, client_secret=client_secret)
 segmentLen = 3
 
@@ -47,35 +44,29 @@ class ReqJSON(db.Model):
 
 class RandomHandler(Handler):
 	def get(self, genre1):
-		genre = urllib.quote(genre1) 		#to make sure it's url valid
+		genre = urllib.quote(genre1) 			#to make sure it's url valid
 		if '/' in genre: 
 			genre, sortOption = genre.split('/')
 		else:
-			sortOption = 'random'				#hot by default
+			sortOption = 'random'				#random by default
 		arr = []
 		comments = []
-		####
-		#requirements for a song to be considered
-		#downloadable, minimum duration (2 min), minimum playbacks (1000), minimum likes (5), minimum comments (5)
-		#hotness = plays / (time elapsed)^1.2
-		#store song snippets on box
-		url = 'https://api-v2.soundcloud.com/explore/' + genre + '?limit=200'		#offset parameter for paging (e.g. offset = n*limit to get results for nth page)
+		url = 'https://api-v2.soundcloud.com/explore/' + genre + '?limit=200'
+
 		self.response.headers['Content-Type'] = 'application/json; charset=UTF-8'
-		# mc_genre = memcache.get('genre')
 		tracks = memcache.get('tracks_' + genre)
-		tracks_filtered = memcache.get('tracks_filtered_' + genre) 			#type string or None
-		lastUpdated = memcache.get('lastUpdated_' + genre)					#type string or None
+		tracks_filtered = memcache.get('tracks_filtered_' + genre) 					#type string or None
+		lastUpdated = memcache.get('lastUpdated_' + genre)							#type string or None
+
 		if tracks:
 			tracks = json.loads(tracks)
 
 		filter_change_needed = False
 		if lastUpdated is None or int(time.time()) - float(lastUpdated) > 3600: 	#if memcache needs to update bc too old
-			#url = url + genre + "?limit=50"
 			req = json.load(urllib2.urlopen(url))
 			tracks = req.get('tracks')
 			# print req.get('next_href')
 			memcache.set('tracks_'+genre, json.dumps(tracks))
-			# memcache.set('genre', genre)
 			memcache.set('lastUpdated_'+genre, int(time.time()))
 			filter_change_needed = True
 
@@ -166,9 +157,6 @@ class RandomHandler(Handler):
 		#now, to return json
 		#just return tracks_filtered list of objects, each one with an additional start time for most popular segment
 
-		#write random function
-		#tracks = json.load(urllib2.urlopen(url)).get('tracks') #url is hardcoded for now...
-		# self.write(tracks[random.randint(0,99)].get('id'))
 		#sort randomly (shuffle)
 		if tracks_filtered and sortOption == 'random': 
 			random.shuffle(tracks_filtered)
@@ -176,8 +164,8 @@ class RandomHandler(Handler):
 		elif tracks_filtered:
 			tracks_filtered.sort(key=lambda x: x.get('hotness'), reverse=True)
 		self.write(json.dumps(tracks_filtered))
-		#self.write("This should spit out a random song")
 
 class APIHandler(Handler):
 	def get(self, inp):
 		self.write(inp)
+
