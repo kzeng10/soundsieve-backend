@@ -1,6 +1,10 @@
 # soundsieve-backend
 SoundSieve backend for the iOS application
 
+Version 1.03, 2/15/2015:
+  - added multi-genre functionality. url format is now using parameters only, i.e. /api?sort=<sort method>&genre=<genre>&genre=<genre>...etc
+  - increased http response deadline so we get deadlineExceeded errors less frequently (ideally, while it's loading the app should have a loading screen or something)
+
 Version 1.02, 2/14/2015:
   - now updates the database and memcache if over an hour old!
   - attempt at pagination has been uploaded, but because of some error on soundcloud's API (fairly sure it's their end since I spent ~3 hours trying to figure out why I can't load past ~100 tracks) the main segment.py file instead just gets as many tracks from soundcloud as it's willing to spit out from the API call
@@ -18,6 +22,6 @@ Version 1, 2/8/2015:
 
 
 To do:
-  - allows for multiple genres
   - weighted comments (e.g. if comment contains "boring" weight is -1, comment contains "awesome" weight is +2, else comment is worth 1)
   - store upvotes/downvotes of song (swipe right or left)
+  - async requests?
