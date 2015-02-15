@@ -64,7 +64,7 @@ class RandomHandler(Handler):
 
 		filter_change_needed = False
 		if lastUpdated is None or int(time.time()) - float(lastUpdated) > 3600: 	#if memcache needs to update bc too old
-			req = json.loads(fetch(url, deadline=8).content)
+			req = json.loads(fetch(url, deadline=20).content)
 			tracks = req.get('tracks')
 			# print req.get('next_href')
 			memcache.set('tracks_'+genre, json.dumps(tracks))
@@ -106,7 +106,7 @@ class RandomHandler(Handler):
 						#parse through comments, increment index of list that it appears in
 						#parse through array, set starting index as startTime if sum is greater than greatestSum
 						link = tracks[a].get('uri') + "/comments?client_id=" + client_id
-						comments = json.loads(fetch(link, deadline=8).content) #retrieve comments
+						comments = json.loads(fetch(link, deadline=20).content) #retrieve comments
 						#are we retrieving comments correctly? sanity check
 						# for b in range(len(comments)):
 						# 	arr.append(comments[b].get('timestamp'))
@@ -178,7 +178,7 @@ class MultiGenreHandler(Handler): #new format is soundsieve-backend.appspot.com/
 		tracks = []
 		for genre in genres:
 			genre = urllib.quote(genre)
-			newtracks = json.loads(fetch('https://soundsieve-backend.appspot.com/api/randomTrack/' + str(genre), deadline=10).content)
+			newtracks = json.loads(fetch('https://soundsieve-backend.appspot.com/api/randomTrack/' + str(genre), deadline=150).content)
 			if newtracks:
 				tracks = tracks + list(newtracks)
 		if sort == 'hot':
