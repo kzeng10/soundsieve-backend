@@ -169,3 +169,20 @@ class APIHandler(Handler):
 	def get(self, inp):
 		self.write(inp)
 
+class MultiGenreHandler(Handler): #new format is soundsieve-backend.appspot.com/api/<sort option>?genre=<genre>&genre=<genre>...etc
+	def get(self):
+		self.response.headers['Content-Type'] = 'application/json; charset=UTF-8'
+		genres = self.request.get_all('genre')
+		sort = self.request.get('sort')
+		tracks = []
+		for genre in genres:
+			genre = urllib.quote(genre)
+			newtracks = json.load(urllib2.urlopen('https://soundsieve-backend.appspot.com/api/randomTrack/' + str(genre)))
+			if newtracks:
+				tracks = tracks + list(newtracks)
+		if sort == 'hot':
+			tracks.sort(key=lambda x: x.get('hotness'), reverse=True)
+		else:		#default is random
+			random.shuffle(tracks)
+		self.write(json.dumps(tracks))
+

@@ -18,17 +18,17 @@
 
 import webapp2
 import re
-from segment import SegmentHandler, APIHandler, RandomHandler
+from segment import SegmentHandler, APIHandler, RandomHandler, MultiGenreHandler
 
 PAGE_RE = r'((?:[ %&a-zA-Z0-9_-]+/?)*)'
 
 class MainHandler(webapp2.RequestHandler):
     def get(self):
         self.response.write('Welcome to SoundSieve.')
-
+print "hello"
 app = webapp2.WSGIApplication([
     ('/', MainHandler),
     ('/segment', SegmentHandler),
     ('/api/randomTrack/'+PAGE_RE, RandomHandler),
-    ('/api/' + PAGE_RE, APIHandler)
+    ('/api', MultiGenreHandler),
 ], debug=True)
