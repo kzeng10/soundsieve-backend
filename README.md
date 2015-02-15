@@ -1,6 +1,9 @@
 # soundsieve-backend
 SoundSieve backend for the iOS application
-
+Version 1.02, 2/14/2015:
+  - now updates the database and memcache if over an hour old!
+  - attempt at pagination has been uploaded, but because of some error on soundcloud's API (fairly sure it's their end since I spent ~3 hours trying to figure out why I can't load past ~100 tracks) the main segment.py file instead just gets as many tracks from soundcloud as it's willing to spit out from the API call
+  
 Version 1.01, 2/8/2015:
   - implemented modified version of Reddit's hotness algorithm to sort tracks based on hotness
   - default sort option is still set to random, but tracks sorted by hotness can be access by &lt;genre&gt;/hot
