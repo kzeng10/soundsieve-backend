@@ -41,3 +41,17 @@ $RECYCLE.BIN/
 Network Trash Folder
 Temporary Items
 .apdisk
+soundcloud
+fudge
+img
+requests
+simplejson
+
+
+soundsieve-backend.sublime-project
+
+soundsieve-backend.sublime-workspace
+
+secret.py
+
+secret.pyc
