@@ -63,7 +63,7 @@ class RandomHandler(Handler):
 			tracks = json.loads(tracks)
 
 		filter_change_needed = False
-		if lastUpdated is None or int(time.time()) - float(lastUpdated) > 3600: 	#if memcache needs to update bc too old
+		if lastUpdated is None or int(time.time()) - float(lastUpdated) > 3600*24: 	#if memcache needs to update bc too old
 			req = json.loads(fetch(url, deadline=20).content)
 			tracks = req.get('tracks')
 			# print req.get('next_href')
@@ -83,7 +83,7 @@ class RandomHandler(Handler):
 			for q in query:
 				if q.genre == genre:										#if found in db. USE THIS TO IMPLEMENT MULTIPLE GENRE FEATURE
 					in_db = True
-					if time.time() - time.mktime(q.created.timetuple()) > 3600:	#if the db entry is more than an hour old, delete and refresh
+					if time.time() - time.mktime(q.created.timetuple()) > 3600*24:	#if the db entry is more than a day old, delete and refresh. ***CHANGE THIS
 						q.delete()												#delete old entry
 						tooOld = True
 					tracks_filtered = json.loads(q.json_str)
