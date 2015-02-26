@@ -24,4 +24,7 @@ Version 1, 2/8/2015:
 To do:
   - weighted comments (e.g. if comment contains "boring" weight is -1, comment contains "awesome" weight is +2, else comment is worth 1)
   - store upvotes/downvotes of song (swipe right or left)
-  - async requests?
+  - async requests for concurrent requests:
+    - store in memcache a boolean value for whether it's requesting or not
+    - if not requesting: send soundcloud api request and set bool var to true, callback function is to update the database with new info and set bool var to false
+    - then, retrieve info from memcache or db
