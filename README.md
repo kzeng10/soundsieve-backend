@@ -1,6 +1,10 @@
 # soundsieve-backend
 SoundSieve backend for the iOS application
 
+Version 1.04, 3/27/2015:
+  - attempt at including asynchronous connections unsuccessful. App Engine's callback implementation would make it way too hairy to do. As a result, I will be transitioning to an Express server running on either OpenShift or Heroku, possibly using only Redis for track data (and maybe a database for analytics/usage data)
+  - This will continue to run at soundsieve-backend.appspot.com, but look out for a new API written in Express
+  
 Version 1.03, 2/15/2015:
   - added multi-genre functionality. url format is now using parameters only, i.e. /api?sort=<sort method>&genre=<genre>&genre=<genre>...etc
   - increased http response deadline so we get deadlineExceeded errors less frequently (ideally, while it's loading the app should have a loading screen or something) (maybe we can solve this with async?)

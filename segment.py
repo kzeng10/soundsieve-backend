@@ -11,7 +11,7 @@ import sys
 import random
 import math
 from google.appengine.ext import db
-from google.appengine.api import memcache
+from google.appengine.api import memcache, urlfetch
 from google.appengine.api.urlfetch import fetch
 from secret import client_id, client_secret
 
@@ -22,6 +22,7 @@ jinja_env = jinja2.Environment(loader = jinja2.FileSystemLoader(template_dir),
 #handler for the jinja2 env. allows us to use templates! c/p this code all you want for other projects
 client = soundcloud.Client(client_id=client_id, client_secret=client_secret)
 segmentLen = 3
+isRequesting = False 		#global var
 
 class Handler(webapp2.RequestHandler):
 	def write(self, *a, **kw):
@@ -44,6 +45,40 @@ class ReqJSON(db.Model):
 	created = db.DateTimeProperty(auto_now_add = True)
 
 class RandomHandler(Handler):
+	
+
+	def asyncFetch(self, urlToFetch, genre):
+		'''
+		async requests for concurrent requests:
+			store in memcache a boolean value for whether it's requesting or not
+			if not requesting: send soundcloud api request and set bool var to true, callback function is to update the memcache and database with new info and set bool var to false
+			meanwhile, retrieve info from memcache and return it
+		'''
+		isRequesting = memcache.get('isRequesting')
+		if not isRequesting:
+			memcache.set('isRequesting', True)
+			#async request here, set it equal to req
+
+			def handle_result(rpc):
+			    result = rpc.get_result()
+				# ... Do something with result...
+
+			# Use a helper function to define the scope of the callback.
+			def create_callback(rpc):
+				return lambda: handle_result(rpc)
+
+			rpc = urlfetch.create_rpc()
+			rpc.callback = create_callback(rpc)
+			urlfetch.make_fetch_call(rpc, urlToFetch)
+			
+		#retrieve from memcache and return
+		#comments = json.loads(fetch(link, deadline=200).content) #retrieve comments
+
+		
+
+			
+			
+
 	def get(self, genre1):
 		genre = urllib.quote(genre1) 			#to make sure it's url valid
 		if '/' in genre: 
@@ -63,18 +98,17 @@ class RandomHandler(Handler):
 			tracks = json.loads(tracks)
 
 		filter_change_needed = False
-		if lastUpdated is None or int(time.time()) - float(lastUpdated) > 3600*24: 	#if memcache needs to update bc too old
-			req = json.loads(fetch(url, deadline=200).content)
+		#if is requesting, skip this 
+		if lastUpdated is None or int(time.time()) - float(lastUpdated) > 3600*24 or isRequesting: 	#if memcache needs to update bc too old
+			##################################
+			req = json.loads(fetch(url, deadline=200).content) 	#ASYNC PLS, fetching tracks
 			tracks = req.get('tracks')
 			# print req.get('next_href')
 			memcache.set('tracks_'+genre, json.dumps(tracks))
 			memcache.set('lastUpdated_'+genre, int(time.time()))
 			filter_change_needed = True
 
-		if tracks_filtered and not filter_change_needed: 					#if the filtered tracks list exists in memcache and change isn't needed
-			tracks_filtered = json.loads(tracks_filtered) 					#convert to list of track objects
-
-		elif filter_change_needed: 											#if memcache needs to update (or not found in memcache)
+			#if memcache needs to update (or not found in memcache)
 			query = db.GqlQuery('SELECT * FROM ReqJSON')					#query db to check if we already did this before
 			query = list(query)
 			# print "DB QUERY"
@@ -155,6 +189,12 @@ class RandomHandler(Handler):
 				track = ReqJSON(genre = genre, json_str=json.dumps(tracks_filtered)) 		#add to db
 				track.put()
 			memcache.set('tracks_filtered_'+genre, json.dumps(tracks_filtered))
+			###################################################
+			#ABOVE PORTION CAN PROBABLY BE PUT IN CALLBACK FUNCTION. ALSO NEED CALLBACK FUNCTION WITHIN THIS ONE TO HANDLE COMMENT REQUESTS
+
+		if tracks_filtered and not filter_change_needed: 					#if the filtered tracks list exists in memcache and change isn't needed
+			tracks_filtered = json.loads(tracks_filtered) 					#convert to list of track objects
+
 		#now, to return json
 		#just return tracks_filtered list of objects, each one with an additional start time for most popular segment
 
